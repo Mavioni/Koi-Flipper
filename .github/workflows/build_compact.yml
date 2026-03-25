@@ -1,6 +1,8 @@
 name: 'Compact build'
 
 on:
+  push:
+    branches: [koi]
   pull_request:
 
 env:
