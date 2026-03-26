@@ -2,7 +2,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <stdbool.h>
 
 // ---------------------------------------------------------------------------
 // Ternary trit type: {-1, 0, +1}
@@ -12,6 +11,14 @@ typedef int8_t trit_t;
 #define TRIT_DENY    ((trit_t)-1)
 #define TRIT_NEUTRAL ((trit_t) 0)
 #define TRIT_ALLOW   ((trit_t)+1)
+
+// 2-bit encoding values for input_trits field packing
+// Encoding: 00=unused, 01=DENY(-1), 10=NEUTRAL(0), 11=ALLOW(+1)
+#define KOI_TRIT_BITS_UNUSED  0u
+#define KOI_TRIT_BITS_DENY    1u
+#define KOI_TRIT_BITS_NEUTRAL 2u
+#define KOI_TRIT_BITS_ALLOW   3u
+#define KOI_TRIT_BITS_SHIFT(field_idx) ((field_idx) * 2u)
 
 // ---------------------------------------------------------------------------
 // Device state vector — 9 trit_t fields, 9 bytes total
@@ -30,6 +37,7 @@ typedef struct {
 } koi_state_t;
 
 #define KOI_STATE_FIELD_COUNT 9
+#define KOI_INPUT_MASK_VALID ((uint16_t)0x01FFu)  // bits 0..8 only (9 fields)
 
 // Field indices — use these instead of magic numbers
 #define KOI_FIELD_NETWORK_TRUST  0
@@ -58,7 +66,7 @@ typedef struct {
 #define KOI_COMBINING_DENY_OVERRIDE    0  // MIN — any DENY overrides
 #define KOI_COMBINING_PERMIT_OVERRIDE  1  // MAX — any ALLOW overrides
 #define KOI_COMBINING_FIRST_APPLICABLE 2  // First matching rule wins
-#define KOI_COMBINING_CONSENSUS        3  // sign(sum of results)
+#define KOI_COMBINING_CONSENSUS        3  // sign(sum of results); tie (sum=0) → TRIT_NEUTRAL
 
 // ---------------------------------------------------------------------------
 // Policy rule — 11 bytes packed.
@@ -66,7 +74,7 @@ typedef struct {
 // Encoding: 00=unused, 01=DENY(-1), 10=NEUTRAL(0), 11=ALLOW(+1)
 // input_mask: bit i = 1 means field i is required to match.
 // ---------------------------------------------------------------------------
-typedef struct __attribute__((packed)) {
+typedef struct {
     uint16_t input_mask;     // 9-bit bitmask over koi_state_t fields
     uint8_t  input_trits[3]; // 2 bits × 12 capacity (9 used)
     uint16_t flags;          // reserved for time-conditions, user-override
@@ -74,4 +82,4 @@ typedef struct __attribute__((packed)) {
     uint8_t  combining;      // KOI_COMBINING_*
     int8_t   result;         // TRIT_DENY, TRIT_NEUTRAL, or TRIT_ALLOW
     uint8_t  priority;       // evaluation order (lower = first)
-} TritRule; // 11 bytes
+} __attribute__((packed)) TritRule; // 11 bytes
