@@ -214,7 +214,7 @@ MU_TEST(test_policy_file_parse_valid) {
     TritRule out_rules[4];
     uint8_t out_count = 0;
     KoiPolicyFileError err = koi_policy_file_load(
-        KOI_TEST_POLICY_PATH, out_rules, 4, &out_count);
+        KOI_TEST_POLICY_PATH, KOI_DOMAIN_RF, out_rules, 4, &out_count);
 
     mu_assert_int_eq(KOI_POLICY_FILE_OK, err);
     mu_assert_int_eq(1, out_count);
@@ -238,7 +238,7 @@ MU_TEST(test_policy_file_bad_magic_fails) {
     furi_record_close(RECORD_STORAGE);
 
     TritRule out[4]; uint8_t count = 0;
-    KoiPolicyFileError err = koi_policy_file_load(KOI_TEST_POLICY_PATH, out, 4, &count);
+    KoiPolicyFileError err = koi_policy_file_load(KOI_TEST_POLICY_PATH, KOI_DOMAIN_RF, out, 4, &count);
     mu_assert_int_eq(KOI_POLICY_FILE_BAD_MAGIC, err);
 
     storage = furi_record_open(RECORD_STORAGE);
@@ -263,7 +263,7 @@ MU_TEST(test_policy_file_crc_mismatch_fails) {
     furi_record_close(RECORD_STORAGE);
 
     TritRule out[4]; uint8_t count = 0;
-    KoiPolicyFileError err = koi_policy_file_load(KOI_TEST_POLICY_PATH, out, 4, &count);
+    KoiPolicyFileError err = koi_policy_file_load(KOI_TEST_POLICY_PATH, KOI_DOMAIN_RF, out, 4, &count);
     mu_assert_int_eq(KOI_POLICY_FILE_CRC_FAIL, err);
 
     storage = furi_record_open(RECORD_STORAGE);

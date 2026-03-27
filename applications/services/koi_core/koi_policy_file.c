@@ -31,10 +31,12 @@ uint32_t koi_policy_file_crc32_finalize(uint32_t crc) {
 
 KoiPolicyFileError koi_policy_file_load(
     const char* path,
+    uint8_t expected_domain,
     TritRule* rules,
     uint8_t capacity,
     uint8_t* out_count)
 {
+    furi_assert(out_count != NULL);
     *out_count = 0;
 
     Storage* storage = furi_record_open(RECORD_STORAGE);
@@ -54,6 +56,10 @@ KoiPolicyFileError koi_policy_file_load(
         }
         if(header[4] != KOI_POLICY_VERSION) {
             result = KOI_POLICY_FILE_BAD_VERSION;
+            break;
+        }
+        if(header[5] != expected_domain) {
+            result = KOI_POLICY_FILE_BAD_DOMAIN;
             break;
         }
 

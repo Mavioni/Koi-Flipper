@@ -13,21 +13,24 @@ typedef enum {
     KOI_POLICY_FILE_CRC_FAIL    = 3,
     KOI_POLICY_FILE_IO_ERROR    = 4,
     KOI_POLICY_FILE_TOO_MANY    = 5,
+    KOI_POLICY_FILE_BAD_DOMAIN  = 6,
 } KoiPolicyFileError;
 
 /**
  * Load a .trit policy binary file from the SD card.
- * Verifies magic bytes, version, and CRC32 before returning.
- * On CRC_FAIL, caller must default to DENY (fail-closed).
+ * Verifies magic bytes, version, domain, and CRC32 before returning.
+ * On CRC_FAIL or BAD_DOMAIN, caller must default to DENY (fail-closed).
  *
- * @param path       Absolute path e.g. "/ext/governance/rf.trit"
- * @param rules      Output buffer for parsed rules
- * @param capacity   Maximum number of rules the buffer can hold
- * @param out_count  Set to actual number of rules loaded
+ * @param path            Absolute path e.g. "/ext/governance/rf.trit"
+ * @param expected_domain Domain byte the file header must match (swap protection)
+ * @param rules           Output buffer for parsed rules
+ * @param capacity        Maximum number of rules the buffer can hold
+ * @param out_count       Set to actual number of rules loaded
  * @return KoiPolicyFileError code
  */
 KoiPolicyFileError koi_policy_file_load(
     const char* path,
+    uint8_t expected_domain,
     TritRule* rules,
     uint8_t capacity,
     uint8_t* out_count);
