@@ -27,11 +27,11 @@ trit_t koi_policy_evaluate(
     uint8_t domain,
     const koi_state_t* state)
 {
-    if(!rules || rule_count == 0) return TRIT_DENY;
+    if(!rules || rule_count == 0 || !state) return TRIT_DENY;
 
     uint8_t combining = KOI_COMBINING_DENY_OVERRIDE;
     bool any_match = false;
-    int8_t consensus_sum = 0;
+    int16_t consensus_sum = 0;
     trit_t result = TRIT_DENY; // fail-closed default
 
     for(uint8_t i = 0; i < rule_count; i++) {
@@ -57,7 +57,7 @@ trit_t koi_policy_evaluate(
         case KOI_COMBINING_FIRST_APPLICABLE:
             break; // already returned on first match above
         case KOI_COMBINING_CONSENSUS:
-            consensus_sum = (int8_t)(consensus_sum + rules[i].result);
+            consensus_sum += rules[i].result;
             result = (consensus_sum > 0) ? TRIT_ALLOW :
                      (consensus_sum < 0) ? TRIT_DENY  : TRIT_NEUTRAL;
             break;
