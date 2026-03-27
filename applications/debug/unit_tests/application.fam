@@ -228,3 +228,11 @@ App(
     entry_point="get_api",
     requires=["unit_tests"],
 )
+
+App(
+    appid="test_koi_governance",
+    sources=["tests/common/*.c", "tests/koi_governance/*.c"],
+    apptype=FlipperAppType.PLUGIN,
+    entry_point="get_api",
+    requires=["unit_tests"],
+)

@@ -1,0 +1,6 @@
+App(
+    appid="koi_core",
+    name="KoiCore",
+    apptype=FlipperAppType.METAPACKAGE,
+    sdk_headers=["koi_trit.h", "koi_policy.h"],
+)
