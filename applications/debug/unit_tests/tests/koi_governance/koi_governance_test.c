@@ -1,7 +1,9 @@
 #include "../test.h" // IWYU pragma: keep
 #include <furi.h>
+#include <storage/storage.h>
 #include <koi_core/koi_trit.h>
 #include <koi_core/koi_policy.h>
+#include <koi_core/koi_policy_file.h>
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -171,6 +173,105 @@ MU_TEST(test_multi_field_condition_all_must_match) {
 }
 
 // ---------------------------------------------------------------------------
+// Policy file tests — helpers
+// ---------------------------------------------------------------------------
+
+#define KOI_TEST_POLICY_PATH EXT_PATH(".tmp/unit_tests/test_policy.trit")
+
+static void write_test_policy_file(uint8_t domain, const TritRule* rule) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+
+    uint8_t header[8];
+    header[0] = 'T'; header[1] = 'R'; header[2] = 'I'; header[3] = 'T';
+    header[4] = 1;
+    header[5] = domain;
+    header[6] = 1; header[7] = 0; // rule_count = 1, little-endian
+
+    uint32_t crc = koi_policy_file_crc32_init();
+    crc = koi_policy_file_crc32_update(crc, header, sizeof(header));
+    crc = koi_policy_file_crc32_update(crc, (const uint8_t*)rule, sizeof(TritRule));
+    crc = koi_policy_file_crc32_finalize(crc);
+
+    storage_simply_remove(storage, KOI_TEST_POLICY_PATH);
+    File* f = storage_file_alloc(storage);
+    mu_check(storage_file_open(f, KOI_TEST_POLICY_PATH, FSAM_WRITE, FSOM_CREATE_NEW));
+    mu_check(storage_file_write(f, header, sizeof(header)) == sizeof(header));
+    mu_check(storage_file_write(f, rule, sizeof(TritRule)) == sizeof(TritRule));
+    mu_check(storage_file_write(f, &crc, sizeof(crc)) == sizeof(crc));
+    storage_file_close(f);
+    storage_file_free(f);
+    furi_record_close(RECORD_STORAGE);
+}
+
+// ---------------------------------------------------------------------------
+// Policy file tests
+// ---------------------------------------------------------------------------
+
+MU_TEST(test_policy_file_parse_valid) {
+    TritRule rule = make_unconditional_rule(KOI_DOMAIN_RF, TRIT_ALLOW, KOI_COMBINING_DENY_OVERRIDE);
+    write_test_policy_file(KOI_DOMAIN_RF, &rule);
+
+    TritRule out_rules[4];
+    uint8_t out_count = 0;
+    KoiPolicyFileError err = koi_policy_file_load(
+        KOI_TEST_POLICY_PATH, out_rules, 4, &out_count);
+
+    mu_assert_int_eq(KOI_POLICY_FILE_OK, err);
+    mu_assert_int_eq(1, out_count);
+    mu_assert_int_eq(KOI_DOMAIN_RF, out_rules[0].domain);
+    mu_assert_int_eq(TRIT_ALLOW, out_rules[0].result);
+
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_remove(storage, KOI_TEST_POLICY_PATH);
+    furi_record_close(RECORD_STORAGE);
+}
+
+MU_TEST(test_policy_file_bad_magic_fails) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_remove(storage, KOI_TEST_POLICY_PATH);
+    File* f = storage_file_alloc(storage);
+    mu_check(storage_file_open(f, KOI_TEST_POLICY_PATH, FSAM_WRITE, FSOM_CREATE_NEW));
+    uint8_t junk[] = {'X','X','X','X',1,0,0,0, 0,0,0,0};
+    storage_file_write(f, junk, sizeof(junk));
+    storage_file_close(f);
+    storage_file_free(f);
+    furi_record_close(RECORD_STORAGE);
+
+    TritRule out[4]; uint8_t count = 0;
+    KoiPolicyFileError err = koi_policy_file_load(KOI_TEST_POLICY_PATH, out, 4, &count);
+    mu_assert_int_eq(KOI_POLICY_FILE_BAD_MAGIC, err);
+
+    storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_remove(storage, KOI_TEST_POLICY_PATH);
+    furi_record_close(RECORD_STORAGE);
+}
+
+MU_TEST(test_policy_file_crc_mismatch_fails) {
+    TritRule rule = make_unconditional_rule(KOI_DOMAIN_RF, TRIT_ALLOW, KOI_COMBINING_DENY_OVERRIDE);
+    write_test_policy_file(KOI_DOMAIN_RF, &rule);
+
+    // Corrupt the last byte of the file (part of the CRC footer)
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    File* f = storage_file_alloc(storage);
+    mu_check(storage_file_open(f, KOI_TEST_POLICY_PATH, FSAM_READ_WRITE, FSOM_OPEN_EXISTING));
+    uint32_t size = (uint32_t)storage_file_size(f);
+    storage_file_seek(f, size - 1, true);
+    uint8_t bad = 0xFF;
+    storage_file_write(f, &bad, 1);
+    storage_file_close(f);
+    storage_file_free(f);
+    furi_record_close(RECORD_STORAGE);
+
+    TritRule out[4]; uint8_t count = 0;
+    KoiPolicyFileError err = koi_policy_file_load(KOI_TEST_POLICY_PATH, out, 4, &count);
+    mu_assert_int_eq(KOI_POLICY_FILE_CRC_FAIL, err);
+
+    storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_remove(storage, KOI_TEST_POLICY_PATH);
+    furi_record_close(RECORD_STORAGE);
+}
+
+// ---------------------------------------------------------------------------
 // Test suite
 // ---------------------------------------------------------------------------
 
@@ -190,6 +291,9 @@ MU_TEST_SUITE(test_koi_governance) {
     MU_RUN_TEST(test_rule_not_matching_skips_rule);
     MU_RUN_TEST(test_domain_filtering_ignores_other_domains);
     MU_RUN_TEST(test_multi_field_condition_all_must_match);
+    MU_RUN_TEST(test_policy_file_parse_valid);
+    MU_RUN_TEST(test_policy_file_bad_magic_fails);
+    MU_RUN_TEST(test_policy_file_crc_mismatch_fails);
 }
 
 int run_minunit_test_koi_governance(void) {
