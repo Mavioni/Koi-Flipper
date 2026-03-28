@@ -3,6 +3,30 @@
 All notable Koi-specific changes are documented here.
 For upstream RogueMaster changes, see [CHANGELOG.md](CHANGELOG.md).
 
+## [0.3.0] - 2026-03-28
+
+### Added
+- **koi_vault FAP** — Encrypted knowledge vault with dual-vault architecture
+  - AES-256-XTS sector-level encryption (mbedtls, exported to SDK)
+  - PBKDF2-HMAC-SHA256 key derivation (100K iterations, bundled trezor-crypto)
+  - Chunked 1GB storage files at `/ext/vault/{alpha,beta}/chunk_NNN.koi`
+  - Encrypted key-value index (195 entries max, 8KB RAM cache)
+  - Dual vault: Alpha (primary) + Beta (decoy/secondary)
+  - Duress PIN: opens Beta vault, wipes Alpha keys from SRAM, logs audit event
+  - Governance integration: all operations gated by `koi_core_evaluate(KOI_DOMAIN_VAULT)`
+  - PIN entry view: numeric keypad on 128x64, lockout after 5 failed attempts
+  - File browser view: scrollable list with add/delete operations
+  - Settings view: create vault, change PIN, configure duress PIN
+  - Auto-lock after 5 minutes of inactivity
+  - 15 on-device unit tests (PBKDF2 vectors, AES-XTS roundtrip, storage, index)
+- **SDK symbol exports**: mbedtls AES-XTS (5), SHA-256 (8), MD/HMAC (20) now available to external FAPs
+- **Koi Build CI**: GitHub Actions workflow on `ubuntu-latest` with firmware artifact upload
+
+### Planned
+- Encrypted vault file import/export (Phase 3b)
+- WireGuard/Tailscale networking (Phase 4)
+- Sub-GHz mesh protocol (Phase 5)
+
 ## [0.2.0] - 2026-03-28
 
 ### Added
