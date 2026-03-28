@@ -2428,15 +2428,15 @@ Function,-,mbedtls_aes_crypt_cfb8,int,"mbedtls_aes_context*, int, size_t, unsign
 Function,-,mbedtls_aes_crypt_ctr,int,"mbedtls_aes_context*, size_t, size_t*, unsigned char[16], unsigned char[16], const unsigned char*, unsigned char*"
 Function,-,mbedtls_aes_crypt_ecb,int,"mbedtls_aes_context*, int, const unsigned char[16], unsigned char[16]"
 Function,-,mbedtls_aes_crypt_ofb,int,"mbedtls_aes_context*, size_t, size_t*, unsigned char[16], const unsigned char*, unsigned char*"
-Function,-,mbedtls_aes_crypt_xts,int,"mbedtls_aes_xts_context*, int, size_t, const unsigned char[16], const unsigned char*, unsigned char*"
+Function,+,mbedtls_aes_crypt_xts,int,"mbedtls_aes_xts_context*, int, size_t, const unsigned char[16], const unsigned char*, unsigned char*"
 Function,-,mbedtls_aes_free,void,mbedtls_aes_context*
 Function,-,mbedtls_aes_init,void,mbedtls_aes_context*
 Function,-,mbedtls_aes_setkey_dec,int,"mbedtls_aes_context*, const unsigned char*, unsigned int"
 Function,-,mbedtls_aes_setkey_enc,int,"mbedtls_aes_context*, const unsigned char*, unsigned int"
-Function,-,mbedtls_aes_xts_free,void,mbedtls_aes_xts_context*
-Function,-,mbedtls_aes_xts_init,void,mbedtls_aes_xts_context*
-Function,-,mbedtls_aes_xts_setkey_dec,int,"mbedtls_aes_xts_context*, const unsigned char*, unsigned int"
-Function,-,mbedtls_aes_xts_setkey_enc,int,"mbedtls_aes_xts_context*, const unsigned char*, unsigned int"
+Function,+,mbedtls_aes_xts_free,void,mbedtls_aes_xts_context*
+Function,+,mbedtls_aes_xts_init,void,mbedtls_aes_xts_context*
+Function,+,mbedtls_aes_xts_setkey_dec,int,"mbedtls_aes_xts_context*, const unsigned char*, unsigned int"
+Function,+,mbedtls_aes_xts_setkey_enc,int,"mbedtls_aes_xts_context*, const unsigned char*, unsigned int"
 Function,-,mbedtls_des3_crypt_cbc,int,"mbedtls_des3_context*, int, size_t, unsigned char[8], const unsigned char*, unsigned char*"
 Function,-,mbedtls_des3_crypt_ecb,int,"mbedtls_des3_context*, const unsigned char[8], unsigned char[8]"
 Function,-,mbedtls_des3_free,void,mbedtls_des3_context*
@@ -2530,8 +2530,8 @@ Function,-,mbedtls_internal_aes_decrypt,int,"mbedtls_aes_context*, const unsigne
 Function,-,mbedtls_internal_aes_encrypt,int,"mbedtls_aes_context*, const unsigned char[16], unsigned char[16]"
 Function,-,mbedtls_internal_md5_process,int,"mbedtls_md5_context*, const unsigned char[64]"
 Function,-,mbedtls_internal_sha1_process,int,"mbedtls_sha1_context*, const unsigned char[64]"
-Function,-,mbedtls_internal_sha256_process,int,"mbedtls_sha256_context*, const unsigned char[64]"
-Function,-,mbedtls_md,int,"const mbedtls_md_info_t*, const unsigned char*, size_t, unsigned char*"
+Function,+,mbedtls_internal_sha256_process,int,"mbedtls_sha256_context*, const unsigned char[64]"
+Function,+,mbedtls_md,int,"const mbedtls_md_info_t*, const unsigned char*, size_t, unsigned char*"
 Function,-,mbedtls_md5,int,"const unsigned char*, size_t, unsigned char[16]"
 Function,-,mbedtls_md5_clone,void,"mbedtls_md5_context*, const mbedtls_md5_context*"
 Function,-,mbedtls_md5_finish,int,"mbedtls_md5_context*, unsigned char[16]"
@@ -2539,25 +2539,25 @@ Function,-,mbedtls_md5_free,void,mbedtls_md5_context*
 Function,-,mbedtls_md5_init,void,mbedtls_md5_context*
 Function,-,mbedtls_md5_starts,int,mbedtls_md5_context*
 Function,-,mbedtls_md5_update,int,"mbedtls_md5_context*, const unsigned char*, size_t"
-Function,-,mbedtls_md_clone,int,"mbedtls_md_context_t*, const mbedtls_md_context_t*"
-Function,-,mbedtls_md_finish,int,"mbedtls_md_context_t*, unsigned char*"
-Function,-,mbedtls_md_free,void,mbedtls_md_context_t*
-Function,-,mbedtls_md_get_name,const char*,const mbedtls_md_info_t*
-Function,-,mbedtls_md_get_size,unsigned char,const mbedtls_md_info_t*
-Function,-,mbedtls_md_get_type,mbedtls_md_type_t,const mbedtls_md_info_t*
-Function,-,mbedtls_md_hmac,int,"const mbedtls_md_info_t*, const unsigned char*, size_t, const unsigned char*, size_t, unsigned char*"
-Function,-,mbedtls_md_hmac_finish,int,"mbedtls_md_context_t*, unsigned char*"
-Function,-,mbedtls_md_hmac_reset,int,mbedtls_md_context_t*
-Function,-,mbedtls_md_hmac_starts,int,"mbedtls_md_context_t*, const unsigned char*, size_t"
-Function,-,mbedtls_md_hmac_update,int,"mbedtls_md_context_t*, const unsigned char*, size_t"
-Function,-,mbedtls_md_info_from_ctx,const mbedtls_md_info_t*,const mbedtls_md_context_t*
-Function,-,mbedtls_md_info_from_string,const mbedtls_md_info_t*,const char*
-Function,-,mbedtls_md_info_from_type,const mbedtls_md_info_t*,mbedtls_md_type_t
-Function,-,mbedtls_md_init,void,mbedtls_md_context_t*
-Function,-,mbedtls_md_list,const int*,
-Function,-,mbedtls_md_setup,int,"mbedtls_md_context_t*, const mbedtls_md_info_t*, int"
-Function,-,mbedtls_md_starts,int,mbedtls_md_context_t*
-Function,-,mbedtls_md_update,int,"mbedtls_md_context_t*, const unsigned char*, size_t"
+Function,+,mbedtls_md_clone,int,"mbedtls_md_context_t*, const mbedtls_md_context_t*"
+Function,+,mbedtls_md_finish,int,"mbedtls_md_context_t*, unsigned char*"
+Function,+,mbedtls_md_free,void,mbedtls_md_context_t*
+Function,+,mbedtls_md_get_name,const char*,const mbedtls_md_info_t*
+Function,+,mbedtls_md_get_size,unsigned char,const mbedtls_md_info_t*
+Function,+,mbedtls_md_get_type,mbedtls_md_type_t,const mbedtls_md_info_t*
+Function,+,mbedtls_md_hmac,int,"const mbedtls_md_info_t*, const unsigned char*, size_t, const unsigned char*, size_t, unsigned char*"
+Function,+,mbedtls_md_hmac_finish,int,"mbedtls_md_context_t*, unsigned char*"
+Function,+,mbedtls_md_hmac_reset,int,mbedtls_md_context_t*
+Function,+,mbedtls_md_hmac_starts,int,"mbedtls_md_context_t*, const unsigned char*, size_t"
+Function,+,mbedtls_md_hmac_update,int,"mbedtls_md_context_t*, const unsigned char*, size_t"
+Function,+,mbedtls_md_info_from_ctx,const mbedtls_md_info_t*,const mbedtls_md_context_t*
+Function,+,mbedtls_md_info_from_string,const mbedtls_md_info_t*,const char*
+Function,+,mbedtls_md_info_from_type,const mbedtls_md_info_t*,mbedtls_md_type_t
+Function,+,mbedtls_md_init,void,mbedtls_md_context_t*
+Function,+,mbedtls_md_list,const int*,
+Function,+,mbedtls_md_setup,int,"mbedtls_md_context_t*, const mbedtls_md_info_t*, int"
+Function,+,mbedtls_md_starts,int,mbedtls_md_context_t*
+Function,+,mbedtls_md_update,int,"mbedtls_md_context_t*, const unsigned char*, size_t"
 Function,-,mbedtls_mpi_add_abs,int,"mbedtls_mpi*, const mbedtls_mpi*, const mbedtls_mpi*"
 Function,-,mbedtls_mpi_add_int,int,"mbedtls_mpi*, const mbedtls_mpi*, mbedtls_mpi_sint"
 Function,-,mbedtls_mpi_add_mpi,int,"mbedtls_mpi*, const mbedtls_mpi*, const mbedtls_mpi*"
@@ -2611,13 +2611,13 @@ Function,-,mbedtls_sha1_free,void,mbedtls_sha1_context*
 Function,-,mbedtls_sha1_init,void,mbedtls_sha1_context*
 Function,-,mbedtls_sha1_starts,int,mbedtls_sha1_context*
 Function,-,mbedtls_sha1_update,int,"mbedtls_sha1_context*, const unsigned char*, size_t"
-Function,-,mbedtls_sha256,int,"const unsigned char*, size_t, unsigned char*, int"
-Function,-,mbedtls_sha256_clone,void,"mbedtls_sha256_context*, const mbedtls_sha256_context*"
-Function,-,mbedtls_sha256_finish,int,"mbedtls_sha256_context*, unsigned char*"
-Function,-,mbedtls_sha256_free,void,mbedtls_sha256_context*
-Function,-,mbedtls_sha256_init,void,mbedtls_sha256_context*
-Function,-,mbedtls_sha256_starts,int,"mbedtls_sha256_context*, int"
-Function,-,mbedtls_sha256_update,int,"mbedtls_sha256_context*, const unsigned char*, size_t"
+Function,+,mbedtls_sha256,int,"const unsigned char*, size_t, unsigned char*, int"
+Function,+,mbedtls_sha256_clone,void,"mbedtls_sha256_context*, const mbedtls_sha256_context*"
+Function,+,mbedtls_sha256_finish,int,"mbedtls_sha256_context*, unsigned char*"
+Function,+,mbedtls_sha256_free,void,mbedtls_sha256_context*
+Function,+,mbedtls_sha256_init,void,mbedtls_sha256_context*
+Function,+,mbedtls_sha256_starts,int,"mbedtls_sha256_context*, int"
+Function,+,mbedtls_sha256_update,int,"mbedtls_sha256_context*, const unsigned char*, size_t"
 Function,-,mblen,int,"const char*, size_t"
 Function,-,mbstowcs,size_t,"wchar_t*, const char*, size_t"
 Function,-,mbtowc,int,"wchar_t*, const char*, size_t"
