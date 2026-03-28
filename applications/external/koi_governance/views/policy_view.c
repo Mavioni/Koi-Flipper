@@ -2,7 +2,7 @@
 
 #include <gui/canvas.h>
 #include <furi.h>
-#include <services/koi_core/koi_trit.h>
+#include <koi_core/koi_trit.h>
 #include <stdio.h>
 
 typedef struct {

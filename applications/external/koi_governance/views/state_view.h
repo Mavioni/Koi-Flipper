@@ -1,7 +1,7 @@
 #pragma once
 
 #include <gui/view.h>
-#include <services/koi_core/koi_core.h>
+#include <koi_core/koi_core.h>
 
 /** Allocate and configure the state view. Caller owns the returned View*. */
 View* koi_state_view_alloc(KoiCore* core);

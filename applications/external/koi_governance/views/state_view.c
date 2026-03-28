@@ -3,7 +3,7 @@
 #include <gui/elements.h>
 #include <gui/canvas.h>
 #include <furi.h>
-#include <services/koi_core/koi_trit.h>
+#include <koi_core/koi_trit.h>
 
 typedef struct {
     KoiCore*    core;

@@ -2,8 +2,8 @@
 
 #include <gui/canvas.h>
 #include <furi.h>
-#include <services/koi_core/koi_trit.h>
-#include <services/koi_core/koi_audit.h>
+#include <koi_core/koi_trit.h>
+#include <koi_core/koi_audit.h>
 #include <stdio.h>
 
 #define AUDIT_VIEW_PAGE_SIZE 4
