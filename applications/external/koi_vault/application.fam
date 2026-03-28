@@ -1,0 +1,17 @@
+# applications/external/koi_vault/application.fam
+App(
+    appid="koi_vault",
+    name="Koi Vault",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="koi_vault_app",
+    requires=["koi_core_start"],
+    stack_size=4 * 1024,
+    fap_category="Misc",
+    fap_icon="icon.png",
+    fap_description="AES-256-XTS encrypted knowledge vault with duress PIN",
+    fap_private_libs=[
+        Lib(
+            name="crypto",
+        ),
+    ],
+)
