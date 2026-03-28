@@ -1,0 +1,46 @@
+name: 'Koi Build'
+
+on:
+  push:
+    branches: [koi]
+  pull_request:
+    branches: [koi]
+
+env:
+  FBT_TOOLCHAIN_PATH: /home/runner
+  FBT_GIT_SUBMODULE_SHALLOW: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: 'Setup Python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 'Build firmware (f7)'
+        run: |
+          ./fbt TARGET_HW=7 DEBUG=0 COMPACT=1 updater_package
+
+      - name: 'Verify Koi branding'
+        run: |
+          echo "=== Build output ==="
+          ls dist/f7-C/f7-update-*/ 2>/dev/null || echo "No update package found"
+          echo "=== Firmware origin ==="
+          grep -r "FIRMWARE_ORIGIN" fbt_options.py || true
+
+      - name: 'Upload firmware artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: koi-firmware-f7
+          path: dist/f7-C/f7-update-Koi420FAP/
+          if-no-files-found: error
+          retention-days: 30
