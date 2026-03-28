@@ -146,6 +146,50 @@ MU_TEST(test_aes_xts_roundtrip_512b_sector) {
     mbedtls_aes_xts_free(&dec_ctx);
 }
 
+MU_TEST(test_crypto_key_derive_deterministic) {
+    uint8_t key1[64], key2[64];
+    const uint8_t pin[] = "1234";
+    const uint8_t salt[16] = {0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,
+                               0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x10};
+    pbkdf2_hmac_sha256_ref(pin, 4, salt, 16, 1000, key1, 64);
+    pbkdf2_hmac_sha256_ref(pin, 4, salt, 16, 1000, key2, 64);
+    mu_assert_mem_eq(key1, key2, 64);
+}
+
+MU_TEST(test_crypto_different_pin_different_key) {
+    uint8_t key1[64], key2[64];
+    const uint8_t salt[16] = {0};
+    pbkdf2_hmac_sha256_ref((const uint8_t*)"1234", 4, salt, 16, 1000, key1, 64);
+    pbkdf2_hmac_sha256_ref((const uint8_t*)"5678", 4, salt, 16, 1000, key2, 64);
+    mu_check(memcmp(key1, key2, 64) != 0);
+}
+
+MU_TEST(test_crypto_different_salt_different_key) {
+    uint8_t key1[64], key2[64];
+    uint8_t salt1[16] = {0x01};
+    uint8_t salt2[16] = {0x02};
+    pbkdf2_hmac_sha256_ref((const uint8_t*)"1234", 4, salt1, 16, 1000, key1, 64);
+    pbkdf2_hmac_sha256_ref((const uint8_t*)"1234", 4, salt2, 16, 1000, key2, 64);
+    mu_check(memcmp(key1, key2, 64) != 0);
+}
+
+MU_TEST(test_crypto_xts_different_sectors_different_ciphertext) {
+    uint8_t xts_key[64];
+    for(int i = 0; i < 64; i++) xts_key[i] = (uint8_t)i;
+    mbedtls_aes_xts_context ctx;
+    mbedtls_aes_xts_init(&ctx);
+    mbedtls_aes_xts_setkey_enc(&ctx, xts_key, 512);
+    uint8_t plaintext[512] = {0};
+    memset(plaintext, 0xAA, 512);
+    uint8_t ct_sector0[512], ct_sector1[512];
+    uint8_t du0[16] = {0}, du1[16] = {0};
+    du0[0] = 0; du1[0] = 1;
+    mbedtls_aes_crypt_xts(&ctx, MBEDTLS_AES_ENCRYPT, 512, du0, plaintext, ct_sector0);
+    mbedtls_aes_crypt_xts(&ctx, MBEDTLS_AES_ENCRYPT, 512, du1, plaintext, ct_sector1);
+    mu_check(memcmp(ct_sector0, ct_sector1, 512) != 0);
+    mbedtls_aes_xts_free(&ctx);
+}
+
 void test_setup(void) {}
 void test_teardown(void) {}
 
@@ -155,4 +199,8 @@ MU_TEST_SUITE(test_koi_vault) {
     MU_RUN_TEST(test_pbkdf2_sha256_vector2);
     MU_RUN_TEST(test_pbkdf2_sha256_64byte_output);
     MU_RUN_TEST(test_aes_xts_roundtrip_512b_sector);
+    MU_RUN_TEST(test_crypto_key_derive_deterministic);
+    MU_RUN_TEST(test_crypto_different_pin_different_key);
+    MU_RUN_TEST(test_crypto_different_salt_different_key);
+    MU_RUN_TEST(test_crypto_xts_different_sectors_different_ciphertext);
 }
