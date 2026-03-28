@@ -1,6 +1,20 @@
 App(
     appid="koi_core",
-    name="KoiCore",
-    apptype=FlipperAppType.METAPACKAGE,
-    sdk_headers=["koi_trit.h", "koi_policy.h"],
+    name="KoiCoreSrv",
+    apptype=FlipperAppType.SERVICE,
+    entry_point="koi_core_srv",
+    cdefines=["SRV_KOI_CORE"],
+    requires=["storage_start"],
+    provides=["koi_core_start"],
+    stack_size=3 * 1024,
+    order=200,
+    sdk_headers=["koi_core.h", "koi_trit.h", "koi_policy.h", "koi_audit.h"],
+)
+
+App(
+    appid="koi_core_start",
+    apptype=FlipperAppType.STARTUP,
+    entry_point="koi_core_srv",
+    requires=["koi_core"],
+    order=90,
 )
