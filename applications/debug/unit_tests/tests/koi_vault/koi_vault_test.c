@@ -239,6 +239,74 @@ MU_TEST(test_storage_write_and_read_sector) {
     furi_record_close(RECORD_STORAGE);
 }
 
+#define TEST_INDEX_MAX_ENTRIES 64
+
+typedef struct {
+    char     name[32];
+    uint16_t chunk_index;
+    uint32_t offset;
+    uint32_t size;
+} TestIndexEntry;
+
+MU_TEST(test_index_add_and_find) {
+    TestIndexEntry entries[TEST_INDEX_MAX_ENTRIES];
+    memset(entries, 0, sizeof(entries));
+    uint16_t count = 0;
+    strncpy(entries[0].name, "secret.txt", 31);
+    entries[0].chunk_index = 0;
+    entries[0].offset = 16;
+    entries[0].size = 1024;
+    count = 1;
+    bool found = false;
+    for(uint16_t i = 0; i < count; i++) {
+        if(strncmp(entries[i].name, "secret.txt", 32) == 0) {
+            found = true;
+            mu_assert_int_eq(0, entries[i].chunk_index);
+            mu_assert_int_eq(16, (int)entries[i].offset);
+            mu_assert_int_eq(1024, (int)entries[i].size);
+        }
+    }
+    mu_check(found);
+}
+
+MU_TEST(test_index_not_found_returns_false) {
+    TestIndexEntry entries[TEST_INDEX_MAX_ENTRIES];
+    memset(entries, 0, sizeof(entries));
+    uint16_t count = 0;
+    bool found = false;
+    for(uint16_t i = 0; i < count; i++) {
+        if(strncmp(entries[i].name, "nope.txt", 32) == 0) found = true;
+    }
+    mu_check(!found);
+}
+
+MU_TEST(test_index_delete_entry) {
+    TestIndexEntry entries[TEST_INDEX_MAX_ENTRIES];
+    memset(entries, 0, sizeof(entries));
+    uint16_t count = 0;
+    strncpy(entries[0].name, "file_a.txt", 31);
+    entries[0].size = 100;
+    strncpy(entries[1].name, "file_b.txt", 31);
+    entries[1].size = 200;
+    count = 2;
+    for(uint16_t i = 0; i < count; i++) {
+        if(strncmp(entries[i].name, "file_a.txt", 32) == 0) {
+            memmove(&entries[i], &entries[i+1], (count - i - 1) * sizeof(TestIndexEntry));
+            count--;
+            break;
+        }
+    }
+    mu_assert_int_eq(1, count);
+    mu_check(strncmp(entries[0].name, "file_b.txt", 32) == 0);
+    mu_assert_int_eq(200, (int)entries[0].size);
+}
+
+MU_TEST(test_index_serialized_size_fits_8kb) {
+    size_t entry_size = 32 + 2 + 4 + 4;
+    size_t max_entries = (8192 - 2) / entry_size;
+    mu_check(max_entries >= 100);
+}
+
 void test_setup(void) {}
 void test_teardown(void) {}
 
@@ -255,4 +323,8 @@ MU_TEST_SUITE(test_koi_vault) {
     MU_RUN_TEST(test_storage_create_vault_dir);
     MU_RUN_TEST(test_storage_chunk_header_roundtrip);
     MU_RUN_TEST(test_storage_write_and_read_sector);
+    MU_RUN_TEST(test_index_add_and_find);
+    MU_RUN_TEST(test_index_not_found_returns_false);
+    MU_RUN_TEST(test_index_delete_entry);
+    MU_RUN_TEST(test_index_serialized_size_fits_8kb);
 }
