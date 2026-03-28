@@ -4,6 +4,7 @@
 #include <koi_core/koi_trit.h>
 #include <koi_core/koi_policy.h>
 #include <koi_core/koi_policy_file.h>
+#include <koi_core/koi_audit.h>
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -272,6 +273,68 @@ MU_TEST(test_policy_file_crc_mismatch_fails) {
 }
 
 // ---------------------------------------------------------------------------
+// Audit ring buffer tests
+// ---------------------------------------------------------------------------
+
+MU_TEST(test_audit_append_and_read) {
+    KoiAudit* audit = koi_audit_alloc();
+    mu_check(audit != NULL);
+
+    koi_state_t state = {0};
+    koi_audit_append(audit, KOI_DOMAIN_RF,  TRIT_ALLOW, &state);
+    koi_audit_append(audit, KOI_DOMAIN_BLE, TRIT_DENY,  &state);
+
+    mu_assert_int_eq(2, koi_audit_count(audit));
+
+    const AuditEntry* e0 = koi_audit_get(audit, 0);  // newest
+    mu_check(e0 != NULL);
+    mu_assert_int_eq(KOI_DOMAIN_BLE, e0->domain);
+    mu_assert_int_eq(TRIT_DENY, e0->result);
+
+    const AuditEntry* e1 = koi_audit_get(audit, 1);  // second-newest
+    mu_check(e1 != NULL);
+    mu_assert_int_eq(KOI_DOMAIN_RF, e1->domain);
+    mu_assert_int_eq(TRIT_ALLOW, e1->result);
+
+    koi_audit_free(audit);
+}
+
+MU_TEST(test_audit_ring_overflow_drops_oldest) {
+    KoiAudit* audit = koi_audit_alloc();
+    mu_check(audit != NULL);
+
+    koi_state_t state = {0};
+    // Fill to capacity with RF ALLOW entries
+    for(int i = 0; i < KOI_AUDIT_CAPACITY; i++) {
+        koi_audit_append(audit, KOI_DOMAIN_RF, TRIT_ALLOW, &state);
+    }
+    mu_assert_int_eq(KOI_AUDIT_CAPACITY, koi_audit_count(audit));
+
+    // Add one more — should not increase count
+    koi_audit_append(audit, KOI_DOMAIN_VAULT, TRIT_DENY, &state);
+    mu_assert_int_eq(KOI_AUDIT_CAPACITY, koi_audit_count(audit));
+
+    // Newest (index 0) should be the VAULT DENY
+    const AuditEntry* newest = koi_audit_get(audit, 0);
+    mu_check(newest != NULL);
+    mu_assert_int_eq(KOI_DOMAIN_VAULT, newest->domain);
+    mu_assert_int_eq(TRIT_DENY, newest->result);
+
+    koi_audit_free(audit);
+}
+
+MU_TEST(test_audit_get_out_of_range_returns_null) {
+    KoiAudit* audit = koi_audit_alloc();
+    koi_state_t state = {0};
+    koi_audit_append(audit, KOI_DOMAIN_RF, TRIT_ALLOW, &state);
+
+    mu_check(koi_audit_get(audit, 0) != NULL);
+    mu_check(koi_audit_get(audit, 1) == NULL);  // only 1 entry
+
+    koi_audit_free(audit);
+}
+
+// ---------------------------------------------------------------------------
 // Test suite
 // ---------------------------------------------------------------------------
 
@@ -294,6 +357,9 @@ MU_TEST_SUITE(test_koi_governance) {
     MU_RUN_TEST(test_policy_file_parse_valid);
     MU_RUN_TEST(test_policy_file_bad_magic_fails);
     MU_RUN_TEST(test_policy_file_crc_mismatch_fails);
+    MU_RUN_TEST(test_audit_append_and_read);
+    MU_RUN_TEST(test_audit_ring_overflow_drops_oldest);
+    MU_RUN_TEST(test_audit_get_out_of_range_returns_null);
 }
 
 int run_minunit_test_koi_governance(void) {

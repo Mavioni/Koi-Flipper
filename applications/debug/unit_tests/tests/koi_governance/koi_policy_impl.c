@@ -3,3 +3,4 @@
  */
 #include <koi_core/koi_policy.c>      // NOLINT(bugprone-suspicious-include)
 #include <koi_core/koi_policy_file.c> // NOLINT(bugprone-suspicious-include)
+#include <koi_core/koi_audit.c>       // NOLINT(bugprone-suspicious-include)
