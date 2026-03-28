@@ -1,5 +1,5 @@
 entry,status,name,type,params
-Version,+,87.1,,
+Version,+,87.2,,
 Header,+,applications/drivers/subghz/cc1101_ext/cc1101_ext_interconnect.h,,
 Header,+,applications/main/archive/helpers/archive_helpers_ext.h,,
 Header,+,applications/main/subghz/subghz_fap.h,,
@@ -4214,3 +4214,21 @@ Variable,+,usb_cdc_single,FuriHalUsbInterface,
 Variable,+,usb_hid,FuriHalUsbInterface,
 Variable,+,usb_hid_u2f,FuriHalUsbInterface,
 Variable,+,usbd_devfs,const usbd_driver,
+Header,+,applications/services/koi_core/koi_audit.h,,
+Header,+,applications/services/koi_core/koi_core.h,,
+Header,+,applications/services/koi_core/koi_policy.h,,
+Header,+,applications/services/koi_core/koi_trit.h,,
+Function,+,koi_audit_alloc,KoiAudit*,
+Function,+,koi_audit_append,void,"KoiAudit*, uint8_t, trit_t, const koi_state_t*"
+Function,+,koi_audit_count,uint8_t,const KoiAudit*
+Function,+,koi_audit_flush,_Bool,"KoiAudit*, const char*"
+Function,+,koi_audit_free,void,KoiAudit*
+Function,+,koi_audit_get,const AuditEntry*,"const KoiAudit*, uint8_t"
+Function,+,koi_core_evaluate,trit_t,"KoiCore*, uint8_t"
+Function,+,koi_core_get_audit,const KoiAudit*,KoiCore*
+Function,+,koi_core_get_pubsub,FuriPubSub*,KoiCore*
+Function,+,koi_core_get_state,koi_state_t,KoiCore*
+Function,+,koi_core_reload_policy,_Bool,"KoiCore*, uint8_t, const char*"
+Function,+,koi_core_set_state_field,void,"KoiCore*, uint8_t, trit_t"
+Function,+,koi_policy_evaluate,trit_t,"const TritRule*, uint8_t, uint8_t, const koi_state_t*"
+Function,+,koi_rule_matches,_Bool,"const TritRule*, const koi_state_t*"
