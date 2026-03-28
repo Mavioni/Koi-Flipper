@@ -23,5 +23,5 @@ typedef struct {
     View* policy_view;
     View* audit_view;
 
-    KoiCore* koi_core;
+    KoiCoreApi* koi_core;
 } KoiGovernanceApp;

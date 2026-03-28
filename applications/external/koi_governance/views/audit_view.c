@@ -9,7 +9,7 @@
 #define AUDIT_VIEW_PAGE_SIZE 4
 
 typedef struct {
-    KoiCore* core;
+    KoiCoreApi* api;
     uint8_t  scroll;
 } AuditViewModel;
 
@@ -19,8 +19,7 @@ static const char* DOMAIN_SHORT[KOI_DOMAIN_COUNT] = {
 
 static void audit_view_draw(Canvas* canvas, void* model_ptr) {
     AuditViewModel* m = model_ptr;
-    const KoiAudit* audit = koi_core_get_audit(m->core);
-    uint8_t count = koi_audit_count(audit);
+    uint8_t count = m->api->audit_count(m->api);
 
     canvas_clear(canvas);
     canvas_set_font(canvas, FontSecondary);
@@ -36,7 +35,7 @@ static void audit_view_draw(Canvas* canvas, void* model_ptr) {
         uint8_t idx = m->scroll + i;
         if(idx >= count) break;
 
-        const AuditEntry* e = koi_audit_get(audit, idx);
+        const AuditEntry* e = m->api->audit_get(m->api, idx);
         char row[48];
         snprintf(row, sizeof(row), "#%03d %s %s t=%lu",
             (int)idx,
@@ -54,8 +53,7 @@ static void audit_view_draw(Canvas* canvas, void* model_ptr) {
 
 static bool audit_view_input(InputEvent* event, void* model_ptr) {
     AuditViewModel* m = model_ptr;
-    const KoiAudit* audit = koi_core_get_audit(m->core);
-    uint8_t count = koi_audit_count(audit);
+    uint8_t count = m->api->audit_count(m->api);
 
     if(event->type == InputTypePress || event->type == InputTypeRepeat) {
         if(event->key == InputKeyUp && m->scroll > 0) {
@@ -75,7 +73,7 @@ static void audit_view_enter(void* model_ptr) {
     m->scroll = 0;
 }
 
-View* koi_audit_view_alloc(KoiCore* core) {
+View* koi_audit_view_alloc(KoiCoreApi* api) {
     View* view = view_alloc();
     view_set_draw_callback(view, audit_view_draw);
     view_set_input_callback(view, audit_view_input);
@@ -83,7 +81,7 @@ View* koi_audit_view_alloc(KoiCore* core) {
     view_allocate_model(view, ViewModelTypeLocking, sizeof(AuditViewModel));
 
     AuditViewModel* m = view_get_model(view);
-    m->core   = core;
+    m->api    = api;
     m->scroll = 0;
     view_commit_model(view, false);
 

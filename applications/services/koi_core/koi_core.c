@@ -18,14 +18,14 @@ static const char* KOI_POLICY_PATHS[KOI_DOMAIN_COUNT] = {
     KOI_GOVERNANCE_DIR "/app.trit",
 };
 
-struct KoiCore {
+typedef struct {
     TritRule    rules[KOI_RULE_CAPACITY];
     uint8_t     rule_count;
     koi_state_t state;
     FuriMutex*  mutex;
     FuriPubSub* pubsub;
     KoiAudit*   audit;
-};
+} KoiCore;
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -60,59 +60,11 @@ static void koi_core_load_all_policies(KoiCore* core) {
 }
 
 // ---------------------------------------------------------------------------
-// Service task
+// Vtable function implementations
 // ---------------------------------------------------------------------------
 
-static int32_t koi_core_task(void* p) {
-    UNUSED(p);
-
-    KoiCore* core = malloc(sizeof(KoiCore));
-    furi_check(core != NULL);
-
-    core->rule_count = 0;
-    memset(&core->state, 0, sizeof(koi_state_t));
-    core->mutex  = furi_mutex_alloc(FuriMutexTypeNormal);
-    core->pubsub = furi_pubsub_alloc();
-    core->audit  = koi_audit_alloc();
-
-    koi_core_load_all_policies(core);
-
-    furi_record_create(RECORD_KOI_CORE, core);
-    FURI_LOG_I(TAG, "koi_core ready: %d rules loaded", core->rule_count);
-
-    // Flush audit log every 60 seconds
-    while(true) {
-        furi_delay_ms(60000);
-        furi_mutex_acquire(core->mutex, FuriWaitForever);
-        koi_audit_flush(core->audit, KOI_AUDIT_LOG_PATH);
-        furi_mutex_release(core->mutex);
-    }
-
-    return 0;
-}
-
-// ---------------------------------------------------------------------------
-// Service entry point
-// ---------------------------------------------------------------------------
-
-int32_t koi_core_srv(void* p) {
-    UNUSED(p);
-    FuriThread* thread = furi_thread_alloc_ex(
-        "KoiCoreSrv", 3 * 1024, koi_core_task, NULL);
-    furi_thread_set_priority(thread, FuriThreadPriorityLow);
-    furi_thread_start(thread);
-    return 0;
-}
-
-void koi_core_on_system_start(void) {
-    koi_core_srv(NULL);
-}
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-trit_t koi_core_evaluate(KoiCore* core, uint8_t domain) {
+static trit_t koi_core_api_evaluate(KoiCoreApi* api, uint8_t domain) {
+    KoiCore* core = (KoiCore*)api->_private;
     furi_mutex_acquire(core->mutex, FuriWaitForever);
     trit_t result = koi_policy_evaluate(core->rules, core->rule_count, domain, &core->state);
     koi_audit_append(core->audit, domain, result, &core->state);
@@ -120,14 +72,16 @@ trit_t koi_core_evaluate(KoiCore* core, uint8_t domain) {
     return result;
 }
 
-koi_state_t koi_core_get_state(KoiCore* core) {
+static koi_state_t koi_core_api_get_state(KoiCoreApi* api) {
+    KoiCore* core = (KoiCore*)api->_private;
     furi_mutex_acquire(core->mutex, FuriWaitForever);
     koi_state_t s = core->state;
     furi_mutex_release(core->mutex);
     return s;
 }
 
-void koi_core_set_state_field(KoiCore* core, uint8_t field_index, trit_t value) {
+static void koi_core_api_set_state_field(KoiCoreApi* api, uint8_t field_index, trit_t value) {
+    KoiCore* core = (KoiCore*)api->_private;
     if(field_index >= KOI_STATE_FIELD_COUNT) return;
     furi_mutex_acquire(core->mutex, FuriWaitForever);
     ((trit_t*)&core->state)[field_index] = value;
@@ -135,11 +89,13 @@ void koi_core_set_state_field(KoiCore* core, uint8_t field_index, trit_t value) 
     furi_mutex_release(core->mutex);
 }
 
-FuriPubSub* koi_core_get_pubsub(KoiCore* core) {
+static FuriPubSub* koi_core_api_get_pubsub(KoiCoreApi* api) {
+    KoiCore* core = (KoiCore*)api->_private;
     return core->pubsub;
 }
 
-bool koi_core_reload_policy(KoiCore* core, uint8_t domain, const char* path) {
+static bool koi_core_api_reload_policy(KoiCoreApi* api, uint8_t domain, const char* path) {
+    KoiCore* core = (KoiCore*)api->_private;
     TritRule new_rules[64];
     uint8_t new_count = 0;
     KoiPolicyFileError err = koi_policy_file_load(path, domain, new_rules, 64, &new_count);
@@ -162,6 +118,77 @@ bool koi_core_reload_policy(KoiCore* core, uint8_t domain, const char* path) {
     return true;
 }
 
-const KoiAudit* koi_core_get_audit(KoiCore* core) {
+static const KoiAudit* koi_core_api_get_audit(KoiCoreApi* api) {
+    KoiCore* core = (KoiCore*)api->_private;
     return core->audit;
+}
+
+static uint8_t koi_core_api_audit_count(KoiCoreApi* api) {
+    KoiCore* core = (KoiCore*)api->_private;
+    return koi_audit_count(core->audit);
+}
+
+static const AuditEntry* koi_core_api_audit_get(KoiCoreApi* api, uint8_t index) {
+    KoiCore* core = (KoiCore*)api->_private;
+    return koi_audit_get(core->audit, index);
+}
+
+// ---------------------------------------------------------------------------
+// Static vtable instance
+// ---------------------------------------------------------------------------
+
+static KoiCoreApi koi_api;
+
+// ---------------------------------------------------------------------------
+// Service task
+// ---------------------------------------------------------------------------
+
+static int32_t koi_core_task(void* p) {
+    UNUSED(p);
+
+    KoiCore* core = malloc(sizeof(KoiCore));
+    furi_check(core != NULL);
+
+    core->rule_count = 0;
+    memset(&core->state, 0, sizeof(koi_state_t));
+    core->mutex  = furi_mutex_alloc(FuriMutexTypeNormal);
+    core->pubsub = furi_pubsub_alloc();
+    core->audit  = koi_audit_alloc();
+
+    koi_core_load_all_policies(core);
+
+    // Wire up vtable
+    koi_api.evaluate        = koi_core_api_evaluate;
+    koi_api.get_state       = koi_core_api_get_state;
+    koi_api.set_state_field = koi_core_api_set_state_field;
+    koi_api.get_pubsub      = koi_core_api_get_pubsub;
+    koi_api.reload_policy   = koi_core_api_reload_policy;
+    koi_api.get_audit       = koi_core_api_get_audit;
+    koi_api.audit_count     = koi_core_api_audit_count;
+    koi_api.audit_get       = koi_core_api_audit_get;
+    koi_api._private        = core;
+
+    furi_record_create(RECORD_KOI_CORE, &koi_api);
+    FURI_LOG_I(TAG, "koi_core ready: %d rules loaded", core->rule_count);
+
+    // Flush audit log every 60 seconds
+    while(true) {
+        furi_delay_ms(60000);
+        furi_mutex_acquire(core->mutex, FuriWaitForever);
+        koi_audit_flush(core->audit, KOI_AUDIT_LOG_PATH);
+        furi_mutex_release(core->mutex);
+    }
+
+    return 0;
+}
+
+// ---------------------------------------------------------------------------
+// Service entry point
+// ---------------------------------------------------------------------------
+
+void koi_core_on_system_start(void) {
+    FuriThread* thread = furi_thread_alloc_ex(
+        "KoiCoreSrv", 3 * 1024, koi_core_task, NULL);
+    furi_thread_set_priority(thread, FuriThreadPriorityLow);
+    furi_thread_start(thread);
 }

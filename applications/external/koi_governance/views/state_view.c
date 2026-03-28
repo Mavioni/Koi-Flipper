@@ -6,7 +6,7 @@
 #include <koi_core/koi_trit.h>
 
 typedef struct {
-    KoiCore*    core;
+    KoiCoreApi* api;
     koi_state_t state;
     uint8_t     scroll;
 } StateViewModel;
@@ -57,7 +57,7 @@ static bool state_view_input(InputEvent* event, void* model_ptr) {
             return true;
         }
         if(event->key == InputKeyOk) {
-            m->state = koi_core_get_state(m->core);
+            m->state = m->api->get_state(m->api);
             return true;
         }
     }
@@ -66,11 +66,11 @@ static bool state_view_input(InputEvent* event, void* model_ptr) {
 
 static void state_view_enter(void* model_ptr) {
     StateViewModel* m = model_ptr;
-    m->state  = koi_core_get_state(m->core);
+    m->state  = m->api->get_state(m->api);
     m->scroll = 0;
 }
 
-View* koi_state_view_alloc(KoiCore* core) {
+View* koi_state_view_alloc(KoiCoreApi* api) {
     View* view = view_alloc();
     view_set_draw_callback(view, state_view_draw);
     view_set_input_callback(view, state_view_input);
@@ -78,7 +78,7 @@ View* koi_state_view_alloc(KoiCore* core) {
     view_allocate_model(view, ViewModelTypeLocking, sizeof(StateViewModel));
 
     StateViewModel* m = view_get_model(view);
-    m->core   = core;
+    m->api    = api;
     m->scroll = 0;
     view_commit_model(view, false);
 

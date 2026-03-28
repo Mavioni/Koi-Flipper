@@ -52,7 +52,7 @@ typedef struct {
     uint8_t  pin_attempts;            // failed PIN attempts since last success
     uint32_t lockout_until_tick;      // tick when lockout expires
 
-    KoiCore* koi_core;                // governance service handle
+    KoiCoreApi* koi_core;             // governance service handle (vtable)
 } KoiVault;
 
 // ---------------------------------------------------------------------------

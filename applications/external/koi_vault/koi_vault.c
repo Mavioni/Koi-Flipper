@@ -62,7 +62,7 @@ bool koi_vault_create(
     const char* duress_pin)
 {
     // Check governance
-    trit_t gov = koi_core_evaluate(vault->koi_core, KOI_DOMAIN_VAULT);
+    trit_t gov = vault->koi_core->evaluate(vault->koi_core, KOI_DOMAIN_VAULT);
     if(gov == TRIT_DENY) {
         FURI_LOG_W(TAG, "Governance denied vault creation");
         return false;
@@ -139,7 +139,7 @@ bool koi_vault_create(
 
 KoiVaultState koi_vault_open(KoiVault* vault, const char* pin) {
     // Check governance first
-    trit_t gov = koi_core_evaluate(vault->koi_core, KOI_DOMAIN_VAULT);
+    trit_t gov = vault->koi_core->evaluate(vault->koi_core, KOI_DOMAIN_VAULT);
     if(gov == TRIT_DENY) {
         FURI_LOG_W(TAG, "Governance denied vault open");
         return KoiVaultStateLocked;
@@ -176,7 +176,7 @@ KoiVaultState koi_vault_open(KoiVault* vault, const char* pin) {
         vault->last_activity_tick = furi_get_tick();
 
         // Set governance state
-        koi_core_set_state_field(vault->koi_core, KOI_FIELD_VAULT_ACCESS, TRIT_ALLOW);
+        vault->koi_core->set_state_field(vault->koi_core, KOI_FIELD_VAULT_ACCESS, TRIT_ALLOW);
         FURI_LOG_I(TAG, "Vault unlocked (alpha)");
         return KoiVaultStateUnlocked;
     }
@@ -198,11 +198,11 @@ KoiVaultState koi_vault_open(KoiVault* vault, const char* pin) {
         vault->last_activity_tick = furi_get_tick();
 
         // Governance: deny vault access for alpha (duress state)
-        koi_core_set_state_field(vault->koi_core, KOI_FIELD_VAULT_ACCESS, TRIT_DENY);
+        vault->koi_core->set_state_field(vault->koi_core, KOI_FIELD_VAULT_ACCESS, TRIT_DENY);
 
         // Log duress event to governance audit
         // (koi_core_evaluate will record the DENY in audit log)
-        koi_core_evaluate(vault->koi_core, KOI_DOMAIN_VAULT);
+        vault->koi_core->evaluate(vault->koi_core, KOI_DOMAIN_VAULT);
 
         return KoiVaultStateDuress;
     }
@@ -236,7 +236,7 @@ void koi_vault_lock(KoiVault* vault) {
     vault->state = KoiVaultStateLocked;
 
     // Governance: lock
-    koi_core_set_state_field(vault->koi_core, KOI_FIELD_VAULT_ACCESS, TRIT_DENY);
+    vault->koi_core->set_state_field(vault->koi_core, KOI_FIELD_VAULT_ACCESS, TRIT_DENY);
     FURI_LOG_I(TAG, "Vault locked");
 }
 
@@ -305,7 +305,7 @@ bool koi_vault_file_write(KoiVault* vault, const char* name, const uint8_t* data
     koi_vault_touch(vault);
 
     // Check governance
-    trit_t gov = koi_core_evaluate(vault->koi_core, KOI_DOMAIN_VAULT);
+    trit_t gov = vault->koi_core->evaluate(vault->koi_core, KOI_DOMAIN_VAULT);
     if(gov == TRIT_DENY) return false;
 
     // Remove existing file if present (overwrite)

@@ -4,7 +4,7 @@ App(
     name="Koi Vault",
     apptype=FlipperAppType.EXTERNAL,
     entry_point="koi_vault_app",
-    requires=["koi_core_start"],
+    requires=["koi_core"],
     stack_size=4 * 1024,
     fap_category="Misc",
     fap_icon="icon.png",

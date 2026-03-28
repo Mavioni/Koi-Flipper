@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 typedef struct {
-    KoiCore* core;
+    KoiCoreApi* api;
     uint8_t  domain;
     uint8_t  scroll;
 } PolicyViewModel;
@@ -25,7 +25,7 @@ static void policy_view_draw(Canvas* canvas, void* model_ptr) {
     canvas_draw_str(canvas, 2, 10, header);
     canvas_draw_line(canvas, 0, 12, 128, 12);
 
-    trit_t decision = koi_core_evaluate(m->core, m->domain);
+    trit_t decision = m->api->evaluate(m->api, m->domain);
     char dec_str[24];
     snprintf(dec_str, sizeof(dec_str), "Decision: %s",
         decision > 0 ? "ALLOW" : decision < 0 ? "DENY" : "NEUT");
@@ -57,7 +57,7 @@ static void policy_view_enter(void* model_ptr) {
     m->scroll = 0;
 }
 
-View* koi_policy_view_alloc(KoiCore* core) {
+View* koi_policy_view_alloc(KoiCoreApi* api) {
     View* view = view_alloc();
     view_set_draw_callback(view, policy_view_draw);
     view_set_input_callback(view, policy_view_input);
@@ -65,7 +65,7 @@ View* koi_policy_view_alloc(KoiCore* core) {
     view_allocate_model(view, ViewModelTypeLocking, sizeof(PolicyViewModel));
 
     PolicyViewModel* m = view_get_model(view);
-    m->core   = core;
+    m->api    = api;
     m->domain = KOI_DOMAIN_RF;
     m->scroll = 0;
     view_commit_model(view, false);
