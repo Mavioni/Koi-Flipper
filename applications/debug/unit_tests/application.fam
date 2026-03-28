@@ -236,3 +236,11 @@ App(
     entry_point="get_api",
     requires=["unit_tests"],
 )
+
+App(
+    appid="test_koi_vault",
+    sources=["tests/common/*.c", "tests/koi_vault/*.c"],
+    apptype=FlipperAppType.PLUGIN,
+    entry_point="get_api",
+    requires=["unit_tests"],
+)
