@@ -1,6 +1,7 @@
 #include "../test.h" // IWYU pragma: keep
 #include <furi.h>
 #include <string.h>
+#include <storage/storage.h>
 
 #include <mbedtls/md.h>
 #include <mbedtls/sha256.h>
@@ -190,6 +191,54 @@ MU_TEST(test_crypto_xts_different_sectors_different_ciphertext) {
     mbedtls_aes_xts_free(&ctx);
 }
 
+#define KOI_TEST_VAULT_DIR EXT_PATH(".tmp/unit_tests/vault_test")
+
+MU_TEST(test_storage_create_vault_dir) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_remove_recursive(storage, KOI_TEST_VAULT_DIR);
+    storage_simply_mkdir(storage, KOI_TEST_VAULT_DIR);
+    mu_check(storage_dir_exists(storage, KOI_TEST_VAULT_DIR));
+    storage_simply_remove_recursive(storage, KOI_TEST_VAULT_DIR);
+    furi_record_close(RECORD_STORAGE);
+}
+
+MU_TEST(test_storage_chunk_header_roundtrip) {
+    uint8_t header[16] = {0};
+    header[0] = 'K'; header[1] = 'O'; header[2] = 'I'; header[3] = 'V';
+    header[4] = 1; header[5] = 0; header[6] = 0; header[7] = 0;
+    mu_assert_int_eq('K', header[0]);
+    mu_assert_int_eq('O', header[1]);
+    mu_assert_int_eq('I', header[2]);
+    mu_assert_int_eq('V', header[3]);
+    mu_assert_int_eq(1, header[4]);
+}
+
+MU_TEST(test_storage_write_and_read_sector) {
+    Storage* storage = furi_record_open(RECORD_STORAGE);
+    storage_simply_remove_recursive(storage, KOI_TEST_VAULT_DIR);
+    storage_simply_mkdir(storage, KOI_TEST_VAULT_DIR);
+    const char* chunk_path = KOI_TEST_VAULT_DIR "/chunk_000.koi";
+    File* f = storage_file_alloc(storage);
+    uint8_t header[16] = {'K','O','I','V', 1, 0, 0, 0, 0,0,0,0,0,0,0,0};
+    uint8_t sector[512];
+    memset(sector, 0xBE, 512);
+    mu_check(storage_file_open(f, chunk_path, FSAM_WRITE, FSOM_CREATE_NEW));
+    mu_check(storage_file_write(f, header, 16) == 16);
+    mu_check(storage_file_write(f, sector, 512) == 512);
+    storage_file_close(f);
+    mu_check(storage_file_open(f, chunk_path, FSAM_READ, FSOM_OPEN_EXISTING));
+    uint8_t read_header[16];
+    mu_check(storage_file_read(f, read_header, 16) == 16);
+    mu_assert_mem_eq(header, read_header, 16);
+    uint8_t read_sector[512];
+    mu_check(storage_file_read(f, read_sector, 512) == 512);
+    mu_assert_mem_eq(sector, read_sector, 512);
+    storage_file_close(f);
+    storage_file_free(f);
+    storage_simply_remove_recursive(storage, KOI_TEST_VAULT_DIR);
+    furi_record_close(RECORD_STORAGE);
+}
+
 void test_setup(void) {}
 void test_teardown(void) {}
 
@@ -203,4 +252,7 @@ MU_TEST_SUITE(test_koi_vault) {
     MU_RUN_TEST(test_crypto_different_pin_different_key);
     MU_RUN_TEST(test_crypto_different_salt_different_key);
     MU_RUN_TEST(test_crypto_xts_different_sectors_different_ciphertext);
+    MU_RUN_TEST(test_storage_create_vault_dir);
+    MU_RUN_TEST(test_storage_chunk_header_roundtrip);
+    MU_RUN_TEST(test_storage_write_and_read_sector);
 }
