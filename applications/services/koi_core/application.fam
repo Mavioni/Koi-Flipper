@@ -4,7 +4,7 @@ App(
     apptype=FlipperAppType.SERVICE,
     entry_point="koi_core_srv",
     cdefines=["SRV_KOI_CORE"],
-    requires=["storage_start"],
+    requires=["storage"],
     provides=["koi_core_start"],
     stack_size=3 * 1024,
     order=200,
@@ -14,7 +14,7 @@ App(
 App(
     appid="koi_core_start",
     apptype=FlipperAppType.STARTUP,
-    entry_point="koi_core_srv",
+    entry_point="koi_core_on_system_start",
     requires=["koi_core"],
     order=90,
 )

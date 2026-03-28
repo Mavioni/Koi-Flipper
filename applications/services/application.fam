@@ -11,6 +11,7 @@ App(
         "loader",
         "power",
         "namechanger_srv",
+        "koi_core_start",
     ],
     sdk_headers=["applications.h"],
 )

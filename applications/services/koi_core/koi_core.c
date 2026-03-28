@@ -41,6 +41,7 @@ static void koi_core_load_all_policies(KoiCore* core) {
         uint8_t loaded = 0;
         KoiPolicyFileError err = koi_policy_file_load(
             KOI_POLICY_PATHS[domain],
+            domain,
             core->rules + core->rule_count,
             (uint8_t)(KOI_RULE_CAPACITY - core->rule_count),
             &loaded);
@@ -94,12 +95,17 @@ static int32_t koi_core_task(void* p) {
 // Service entry point
 // ---------------------------------------------------------------------------
 
-void koi_core_srv(void* p) {
+int32_t koi_core_srv(void* p) {
     UNUSED(p);
     FuriThread* thread = furi_thread_alloc_ex(
         "KoiCoreSrv", 3 * 1024, koi_core_task, NULL);
     furi_thread_set_priority(thread, FuriThreadPriorityLow);
     furi_thread_start(thread);
+    return 0;
+}
+
+void koi_core_on_system_start(void) {
+    koi_core_srv(NULL);
 }
 
 // ---------------------------------------------------------------------------
@@ -136,19 +142,19 @@ FuriPubSub* koi_core_get_pubsub(KoiCore* core) {
 bool koi_core_reload_policy(KoiCore* core, uint8_t domain, const char* path) {
     TritRule new_rules[64];
     uint8_t new_count = 0;
-    KoiPolicyFileError err = koi_policy_file_load(path, new_rules, 64, &new_count);
+    KoiPolicyFileError err = koi_policy_file_load(path, domain, new_rules, 64, &new_count);
     if(err != KOI_POLICY_FILE_OK) return false;
 
     furi_mutex_acquire(core->mutex, FuriWaitForever);
     // Compact out old rules for this domain
-    uint8_t write = 0;
+    uint16_t write = 0;
     for(uint8_t i = 0; i < core->rule_count; i++) {
         if(core->rules[i].domain != domain) {
             core->rules[write++] = core->rules[i];
         }
     }
     // Append new rules
-    for(uint8_t i = 0; i < new_count && write < KOI_RULE_CAPACITY; i++) {
+    for(uint8_t i = 0; i < new_count && write < (uint16_t)KOI_RULE_CAPACITY; i++) {
         core->rules[write++] = new_rules[i];
     }
     core->rule_count = write;
