@@ -1,0 +1,11 @@
+App(
+    appid="koi_governance",
+    name="Koi Governance",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="koi_governance_app",
+    requires=["koi_core_start"],
+    stack_size=2 * 1024,
+    fap_category="Misc",
+    fap_icon="icon.png",
+    fap_description="Ternary governance engine UI",
+)
