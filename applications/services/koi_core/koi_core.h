@@ -1,8 +1,17 @@
 #pragma once
 
 #include "koi_trit.h"
-#include "koi_audit.h"
 #include <furi.h>
+
+// Forward declarations — FAPs access these only through vtable pointers
+typedef struct KoiAudit KoiAudit;
+typedef struct {
+    uint32_t tick;
+    uint8_t  domain;
+    int8_t   result;
+    uint8_t  state_hash;
+    uint8_t  _pad;
+} AuditEntry;
 
 #define RECORD_KOI_CORE "koi_core"
 

@@ -4,5 +4,5 @@ App(
     entry_point="koi_core_on_system_start",
     requires=["storage"],
     order=200,
-    sdk_headers=["koi_core.h", "koi_trit.h", "koi_policy.h", "koi_audit.h"],
+    sdk_headers=["koi_core.h", "koi_trit.h"],
 )

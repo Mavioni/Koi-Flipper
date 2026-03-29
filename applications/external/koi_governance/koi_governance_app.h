@@ -5,7 +5,6 @@
 #include <gui/modules/submenu.h>
 
 #include <koi_core/koi_core.h>
-#include <koi_core/koi_audit.h>
 
 typedef enum {
     KoiGovernanceViewMenu   = 0,
