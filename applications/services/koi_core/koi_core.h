@@ -5,6 +5,11 @@
 
 // Forward declarations — FAPs access these only through vtable pointers
 typedef struct KoiAudit KoiAudit;
+
+// AuditEntry must match the definition in koi_audit.h exactly.
+// We guard so only one definition wins.
+#ifndef KOI_AUDIT_ENTRY_DEFINED
+#define KOI_AUDIT_ENTRY_DEFINED
 typedef struct {
     uint32_t tick;
     uint8_t  domain;
@@ -12,6 +17,7 @@ typedef struct {
     uint8_t  state_hash;
     uint8_t  _pad;
 } AuditEntry;
+#endif
 
 #define RECORD_KOI_CORE "koi_core"
 

@@ -6,6 +6,8 @@
 
 #define KOI_AUDIT_CAPACITY 128
 
+#ifndef KOI_AUDIT_ENTRY_DEFINED
+#define KOI_AUDIT_ENTRY_DEFINED
 typedef struct {
     uint32_t tick;       // furi_get_tick() at decision time
     uint8_t  domain;     // KOI_DOMAIN_*
@@ -13,6 +15,7 @@ typedef struct {
     uint8_t  state_hash; // XOR fold of koi_state_t bytes for quick diffing
     uint8_t  _pad;       // padding to 8 bytes
 } AuditEntry; // 8 bytes exactly
+#endif
 
 typedef struct KoiAudit KoiAudit;
 
